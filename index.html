@@ -1,348 +1,223 @@
 <!doctype html>
 <html lang="fa">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>KeePrice — ابزار فاکتور و سبد خرید (نسخه محلی)</title>
-  <style>
-    :root{--bg:#f6fbff;--card:#ffffff;--accent:#0b63b6;--accent-2:#ff7a00;--muted:#6b7280}
-    body{font-family:Tahoma,Arial;direction:rtl;background:var(--bg);margin:0;color:#111}
-    header{background:linear-gradient(90deg,var(--accent) 0%,#0f7bd1 100%);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px}
-    header h1{font-size:18px;margin:0}
-    .container{display:grid;grid-template-columns:1fr 380px;gap:18px;padding:18px}
-    .card{background:var(--card);border-radius:10px;padding:14px;box-shadow:0 6px 18px rgba(11,99,182,0.06)}
-    .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-    input,select,button,textarea{font-family:inherit}
-    .search{flex:1}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:8px;border-bottom:1px solid #eee;text-align:right;font-size:13px}
-    th{color:var(--muted);font-weight:600;text-align:right}
-    .muted{color:var(--muted);font-size:12px}
-    .price{font-weight:700}
-    .btn{background:var(--accent);color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
-    .btn.secondary{background:#fff;color:var(--accent);border:1px solid #dbeefa}
-    .small{padding:6px 8px;font-size:13px}
-    .tag{display:inline-block;background:#eef7ff;color:var(--accent);padding:4px 8px;border-radius:999px;font-size:12px}
-    .sidebar{position:sticky;top:18px;height:fit-content}
-    .cart-list{max-height:420px;overflow:auto}
-    .cart-row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #eee}
-    .total{font-size:18px;font-weight:800;margin-top:12px}
-    .controls{display:flex;gap:8px;align-items:center}
-    .muted-block{color:#222;background:#fff;padding:8px;border-radius:8px;border:1px dashed #eee}
-    .csv-area{width:100%;height:100px}
-    .note{font-size:12px;color:#555;margin-top:8px}
-    .label{font-size:13px;color:#333;margin-bottom:6px}
-    footer{padding:12px;text-align:center;color:var(--muted);font-size:13px}
-    /* responsive */
-    @media(max-width:920px){.container{grid-template-columns:1fr;padding:12px}.sidebar{position:static}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KeePrice — فروشگاه مدرن</title>
+<style>
+:root{
+  --bg:#f0f4f8;
+  --card:#ffffff;
+  --accent:#0b3d91;
+  --accent2:#b7410e;
+  --muted:#d0d0d0;
+  --text:#111;
+}
+body{font-family:Tahoma,Arial, sans-serif;direction:rtl;background:var(--bg);margin:0;color:var(--text)}
+header{background:linear-gradient(90deg,var(--accent) 0%,#0f5bb6 100%);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+header h1{margin:0;font-size:20px;font-weight:600}
+.container{display:grid;grid-template-columns:1fr 380px;gap:18px;padding:18px}
+.card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+input,select,button{font-family:inherit}
+input,select{padding:6px 10px;border-radius:6px;border:1px solid #ccc}
+button{cursor:pointer}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.product-card{background:#fff;border-radius:12px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);transition:0.2s}
+.product-card:hover{box-shadow:0 6px 18px rgba(0,0,0,0.12);transform:translateY(-2px)}
+.product-name{font-weight:600;margin:6px 0}
+.product-brand{color:var(--muted);font-size:13px}
+.product-category{font-size:12px;color:#999}
+.price{font-weight:700;color:var(--accent2);margin:8px 0}
+.btn{background:var(--accent);color:#fff;border:none;padding:6px 10px;border-radius:6px;transition:0.2s}
+.btn:hover{background:var(--accent2)}
+.btn.small{padding:4px 8px;font-size:13px}
+.cart-list{max-height:420px;overflow:auto}
+.cart-row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #eee}
+.total{font-size:18px;font-weight:800;margin-top:12px;color:var(--accent2)}
+.sidebar{position:sticky;top:18px;height:fit-content}
+.muted{color:var(--muted);font-size:12px}
+@media(max-width:920px){.container{grid-template-columns:1fr;padding:12px}.sidebar{position:static}}
+</style>
 </head>
 <body>
-  <header>
-    <div style="width:44px;height:44px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden">
-      <img src="https://uploadkon.ir/uploads/14ea07_25photo-2025-10-06-18-29-38-removebg-preview.png" alt="KeePrice Logo" style="width:100%;height:100%;object-fit:contain" />
-    </div>
-    <div>
-      <h1>KeePrice — فاکتور آنلاین و سبد خرید (نسخه محلی)</h1>
-      <div class="muted">بارگذاری لیست محصولات → انتخاب کالا → انتخاب نوع قیمت → ساخت فاکتور</div>
-    </div>
-  </header>
+<header>
+<div style="width:44px;height:44px;border-radius:8px;overflow:hidden">
+  <img src="https://uploadkon.ir/uploads/76bd07_25photo-2025-10-06-18-29-38-removebg-preview.png" alt="Logo" style="width:100%;height:100%;object-fit:cover">
+</div>
 
-  <div class="container">
-    <main class="card">
-      <div class="toolbar">
-        <input id="q" class="search" placeholder="جستجو بر اساس نام، برند یا SKU" />
-        <select id="filterCat"><option value="">همه دسته‌ها</option></select>
-        <select id="priceType"><option value="customer">قیمت مشتری</option><option value="partner">قیمت همکار</option></select>
-        <button class="btn small" id="clearBtn">پاک‌سازی</button>
-      </div>
-
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
-        <div style="flex:1">
-          <div class="label">بارگذاری سریع از CSV</div>
-          <textarea id="csv" class="csv-area" placeholder="در هر سطر: SKU,Category,Name,Brand,PartnerPrice,CustomerPrice,LastChange,Note\nمثال: DKT-001,داکت,داکت 40x40 سفید,Supita,12000,15000,2025-10-06,"></textarea>
-          <div style="margin-top:8px;display:flex;gap:8px">
-            <button class="btn small" id="loadCsv">بارگذاری CSV</button>
-            <button class="btn small secondary" id="loadSample">بارگذاری نمونه</button>
-            <button class="btn small secondary" id="exportJson">ذخیره JSON</button>
-          </div>
-        </div>
-        <div style="width:210px">
-          <div class="label">قالب سریع</div>
-          <div class="muted-block">SKU,Category,Name,Brand,PartnerPrice,CustomerPrice,LastChange,Note</div>
-        </div>
-      </div>
-
-      <div id="productsArea">
-        <table id="productsTable">
-          <thead>
-            <tr><th>SKU</th><th>نام محصول</th><th>برند</th><th>دسته</th><th>قیمت (انتخاب شده)</th><th>عملیات</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </main>
-
-    <aside class="sidebar">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div><strong>سبد خرید</strong><div class="muted">آیتم‌های انتخاب‌شده</div></div>
-          <div class="tag">KeePrice</div>
-        </div>
-
-        <div class="cart-list" id="cartList"></div>
-
-        <div class="total" id="total">جمع کل: 0 تومان</div>
-
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <button class="btn" id="printBtn">چاپ / پیش‌نمایش فاکتور</button>
-          <button class="btn secondary" id="clearCart">پاک کردن</button>
-        </div>
-
-        <div class="note">نکته: می‌تونی CSV رو از صاحب‌کار بگیری و اینجا paste کنی تا سریع محصولات لود بشن.</div>
-      </div>
-    </aside>
+  <div>
+    <h1>KeePrice — فروشگاه مدرن</h1>
+    <div class="muted">انتخاب کالا → نوع قیمت → افزودن به سبد</div>
   </div>
+</header>
 
-  <footer>نسخه سادهٔ KeePrice — باز کردن فایل HTML در مرورگر کافیست. برای میزبانی آنلاین نیاز به هاست/سرور دارید.</footer>
+<div class="container">
+  <main class="card">
+    <div class="toolbar">
+      <input id="q" placeholder="جستجو نام یا برند">
+      <select id="filterCat"><option value="">همه دسته‌ها</option></select>
+      <select id="priceType">
+        <option value="partner">قیمت همکار</option>
+        <option value="customer">قیمت مشتری</option>
+      </select>
+      <button class="btn small" id="clearBtn">پاک‌سازی</button>
+    </div>
+
+    <div class="products-grid" id="productsArea"></div>
+  </main>
+
+  <aside class="sidebar">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div><strong>سبد خرید</strong><div class="muted">آیتم‌های انتخاب‌شده</div></div>
+        <div class="tag" style="background:var(--accent2);color:#fff;padding:4px 8px;border-radius:999px;font-size:12px;">KeePrice</div>
+      </div>
+      <div class="cart-list" id="cartList"></div>
+      <div class="total" id="total">جمع کل: 0 تومان</div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn" id="printBtn">چاپ / پیش‌نمایش فاکتور</button>
+        <button class="btn small" id="clearCart">پاک کردن</button>
+      </div>
+    </div>
+  </aside>
+</div>
 
 <script>
 (function(){
-  // state
-  let products = [];
-  let cart = [];
+let products=[], cart=[];
 
-  // helpers
-  function fmt(n){ if(isNaN(n)) return '0 تومان'; return Number(n).toLocaleString('fa-IR') + ' تومان'; }
-  function byId(id){ return document.getElementById(id); }
+function fmt(n){ return Number(n).toLocaleString('fa-IR') + ' تومان'; }
+function byId(id){ return document.getElementById(id); }
 
-  // chosen markup: customer price = partner * 1.20 (rounded)
-  function calcCustomer(partner){ return Math.round(Number(partner || 0) * 1.20); }
+// تمام محصولات با قیمت همکار
+const rawProducts=[
+{SKU:'IR-AMP-2',category:'آداپتور',name:'ایرانی آمپر ۲',partner:950000},
+{SKU:'2A-VOLT',category:'آداپتور',name:'۲ آمپر ولت',partner:1250000},
+{SKU:'5A-LAP',category:'آداپتور',name:'لپتابی آمپر ۵',partner:2450000},
+{SKU:'5A-IND',category:'آداپتور',name:'صنعتی آمپر ۵',partner:3100000},
+{SKU:'10A-IND',category:'آداپتور',name:'صنعتی امیر ۱۰',partner:4800000},
+{SKU:'15A-IND',category:'آداپتور',name:'صنعتی امیر ۱۵',partner:5400000},
+{SKU:'20A-IND',category:'آداپتور',name:'صنعتی آمپر ۲۰',partner:6200000},
+{SKU:'30A-IND',category:'آداپتور',name:'صنعتی آمپر ۳۰',partner:7000000}, 
+{SKU:'K07-64',category:'کابل ترکیبی',name:'کابل ۰۷/۶۴',partner:90000},
+{SKU:'K07-96-CCA',category:'کابل ترکیبی',name:'کابل 07/96 cca',partner:155000},
+{SKU:'K07-96-CU',category:'کابل ترکیبی',name:'کابل 07/96 مس',partner:185000},
+{SKU:'K08-96-CCA',category:'کابل ترکیبی',name:'کابل 08/96 cca',partner:135000},
+{SKU:'UTP-CU',category:'شبکه',name:'کابل UTP CU 305M',partner:215000},
+{SKU:'UTP-CCA',category:'شبکه',name:'کابل UTP CCA 305M',partner:135000},
+{SKU:'SFTP-CU',category:'شبکه',name:'کابل SFTP CU 500M',partner:265000},
+{SKU:'SFTP-CCA',category:'شبکه',name:'کابل SFTP CCA 500M',partner:160000},
+{SKU:'HDMI-1.5M',category:'HDMI',name:'HDMI 1/5M',partner:1200000},
+{SKU:'HDMI-3M',category:'HDMI',name:'HDMI 3M',partner:1800000},
+{SKU:'HDMI-SM',category:'HDMI',name:'HDMI SM',partner:4800000},
+{SKU:'HDMI-10M',category:'HDMI',name:'HDMI 10M',partner:6500000},
+{SKU:'VGA-1.5M',category:'VGA',name:'VGA 1/5M',partner:650000},
+{SKU:'VGA-3M',category:'VGA',name:'VGA 3M',partner:1200000},
+{SKU:'USB-1.5M',category:'USB',name:'USB 1/5M',partner:850000},
+{SKU:'BCHK-1',category:'بچکرد',name:'۱ بچکرد',partner:450000},
+{SKU:'FLEX-11',category:'فلکسی',name:'۱۱ نمره فلکسی',partner:192000},
+{SKU:'FLEX-13',category:'فلکسی',name:'۱۳ نمره فلکسی',partner:214000},
+{SKU:'FLEX-16',category:'فلکسی',name:'۱۶ نمره فلکسی',partner:323200},
+{SKU:'FLEX-21',category:'فلکسی',name:'۲۱ نمره فلکسی',partner:466200},
+{SKU:'FLEX-25',category:'فلکسی',name:'۲۵ نمره فلکسی',partner:540100},
+{SKU:'FLEX-29',category:'فلکسی',name:'۲۹ نمره فلکسی',partner:861800},
+{SKU:'FLEX-36',category:'فلکسی',name:'۳۶ نمره فلکسی',partner:1200000}
+];
 
-  // sample dataset created from provided list (kept all items; missing prices -> 0)
-  // SKU autogenerated (KEEPRID-XXX). partner = قیمت همکار وارد شده؛ customer محاسبه شده خودکار.
-  const sample = [
-    {SKU:'KPR-001',category:'آمپر',name:'ایرانی آمپر 2',brand:'ایرانی',partner:950000,customer:calcCustomer(950000),last:'',note:''},
-    {SKU:'KPR-002',category:'آمپر',name:'2 آمپر ولت',brand:'ولت',partner:1250000,customer:calcCustomer(1250000),last:'',note:''},
-    {SKU:'KPR-003',category:'آمپر',name:'لپتابی آمپر 5',brand:'لپتابی',partner:2450000,customer:calcCustomer(2450000),last:'',note:''},
-    {SKU:'KPR-004',category:'آمپر',name:'صنعتی آمپر 5',brand:'صنعتی',partner:3100000,customer:calcCustomer(3100000),last:'',note:''},
-    {SKU:'KPR-005',category:'آمپر',name:'صنعتی امپر 10',brand:'صنعتی',partner:4800000,customer:calcCustomer(4800000),last:'',note:''},
-    {SKU:'KPR-006',category:'آمپر',name:'صنعتی امپر 15',brand:'صنعتی',partner:5400000,customer:calcCustomer(5400000),last:'',note:''},
-    {SKU:'KPR-007',category:'آمپر',name:'صنعتی آمپر 20',brand:'صنعتی',partner:6200000,customer:calcCustomer(6200000),last:'',note:''},
-    {SKU:'KPR-008',category:'آمپر',name:'صنعتی آمپر 30',brand:'صنعتی',partner:0,customer:calcCustomer(0),last:'',note:'قیمت وارد نشده'},
+// ساخت قیمت مشتری با ۲۰٪ بیشتر
+products=rawProducts.map(p=>({...p,customer:Math.round(p.partner*1.2)}));
 
-    /* کابل ترکیبی */
-    {SKU:'KPR-100',category:'کابل',name:'ترکیبی کابل 07/64',brand:'ترکیبی',partner:90000,customer:calcCustomer(90000),last:'',note:''},
-    {SKU:'KPR-101',category:'کابل',name:'ترکیبی کابل 07/96 CCA',brand:'ترکیبی',partner:0,customer:calcCustomer(0),last:'',note:'قیمت درج نشده'},
-    {SKU:'KPR-102',category:'کابل',name:'ترکیبی کابل 07/96 نیم برق',brand:'ترکیبی',partner:155000,customer:calcCustomer(155000),last:'',note:''},
-    {SKU:'KPR-103',category:'کابل',name:'ترکیبی کابل 07/96 مس یک برق',brand:'ترکیبی',partner:185000,customer:calcCustomer(185000),last:'',note:''},
-    {SKU:'KPR-104',category:'کابل',name:'ترکیبی کابل 08/96 CCA نیم برق',brand:'ترکیبی',partner:135000,customer:calcCustomer(135000),last:'',note:''},
+const q=byId('q'), filterCat=byId('filterCat'), priceType=byId('priceType'), productsArea=byId('productsArea'), cartList=byId('cartList'), totalEl=byId('total');
 
-    /* شبکه */
-    {SKU:'KPR-110',category:'کابل شبکه',name:'شبکه کابل UTP CU 305M',brand:'شبکه',partner:215000,customer:calcCustomer(215000),last:'',note:''},
-    {SKU:'KPR-111',category:'کابل شبکه',name:'شبکه کابل UTP CCA 305M',brand:'شبکه',partner:135000,customer:calcCustomer(135000),last:'',note:''},
-    {SKU:'KPR-112',category:'کابل شبکه',name:'شبکه کابل SFTP CU 500M',brand:'شبکه',partner:265000,customer:calcCustomer(265000),last:'',note:''},
-    {SKU:'KPR-113',category:'کابل شبکه',name:'شبکه SFTP کابل CCA بیرون بر 500M',brand:'شبکه',partner:160000,customer:calcCustomer(160000),last:'',note:''},
+rebuildCats(); renderProducts(); renderCart();
 
-    /* کابل برق (قیمت‌ها ناقص نگه داشته شده) */
-    {SKU:'KPR-120',category:'کابل برق',name:'2 کابل 0.75 برق',brand:'برق',partner:0,customer:calcCustomer(0),last:'',note:'قیمت وارد نشده'},
-    {SKU:'KPR-121',category:'کابل برق',name:'12 کابل برق',brand:'برق',partner:0,customer:calcCustomer(0),last:'',note:'قیمت وارد نشده'},
-    {SKU:'KPR-122',category:'کابل برق',name:'2 کابل 1.5 برق',brand:'برق',partner:0,customer:calcCustomer(0),last:'',note:'قیمت وارد نشده'},
+function rebuildCats(){
+  const cats=Array.from(new Set(products.map(p=>p.category)));
+  filterCat.innerHTML='<option value="">همه دسته‌ها</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
 
-    /* سیم دایلوی */
-    {SKU:'KPR-130',category:'سیم',name:'سیم دایلوی',brand:'دایلوی',partner:0,customer:calcCustomer(0),last:'',note:''},
-    {SKU:'KPR-131',category:'سیم',name:'21 سیم دایلوی',brand:'دایلوی',partner:650000,customer:calcCustomer(650000),last:'',note:''},
-    {SKU:'KPR-132',category:'سیم',name:'21.5 سیم دایلوی',brand:'دایلوی',partner:0,customer:calcCustomer(0),last:'',note:''},
-
-    /* HDMI (دو ست؛ یکی قیمت پایین‌تر و یکی higher set "Ayin B" — من هر دو ست وارد کردم) */
-    {SKU:'KPR-200',category:'HDMI',name:'HDMI 1.5M',brand:'HDMI',partner:1200000,customer:calcCustomer(1200000),last:'',note:''},
-    {SKU:'KPR-201',category:'HDMI',name:'HDMI 3M',brand:'HDMI',partner:1800000,customer:calcCustomer(1800000),last:'',note:''},
-    {SKU:'KPR-202',category:'HDMI',name:'HDMI SM',brand:'HDMI',partner:4800000,customer:calcCustomer(4800000),last:'',note:''},
-    {SKU:'KPR-203',category:'HDMI',name:'HDMI 10M',brand:'HDMI',partner:6500000,customer:calcCustomer(6500000),last:'',note:''},
-    {SKU:'KPR-204',category:'HDMI',name:'HDMI 15M',brand:'HDMI',partner:0,customer:calcCustomer(0),last:'',note:''},
-    {SKU:'KPR-205',category:'HDMI',name:'HDMI 20M',brand:'HDMI',partner:0,customer:calcCustomer(0),last:'',note:''},
-    {SKU:'KPR-206',category:'HDMI',name:'HDMI 30M',brand:'HDMI',partner:0,customer:calcCustomer(0),last:'',note:''},
-
-    /* Ayin B (دسته دوم HDMI با قیمت‌های متفاوت که داده بودی) */
-    {SKU:'KPR-210',category:'HDMI',name:'HDMI 1.5M (Ayin B)',brand:'Ayin B',partner:1800000,customer:calcCustomer(1800000),last:'',note:''},
-    {SKU:'KPR-211',category:'HDMI',name:'HDMI 3M (Ayin B)',brand:'Ayin B',partner:2700000,customer:calcCustomer(2700000),last:'',note:''},
-    {SKU:'KPR-212',category:'HDMI',name:'HDMI SM (Ayin B)',brand:'Ayin B',partner:3800000,customer:calcCustomer(3800000),last:'',note:''},
-    {SKU:'KPR-213',category:'HDMI',name:'HDMI 10M (Ayin B)',brand:'Ayin B',partner:7900000,customer:calcCustomer(7900000),last:'',note:''},
-    {SKU:'KPR-214',category:'HDMI',name:'HDMI 15M (Ayin B)',brand:'Ayin B',partner:12000000,customer:calcCustomer(12000000),last:'',note:''},
-    {SKU:'KPR-215',category:'HDMI',name:'HDMI 20M (Ayin B)',brand:'Ayin B',partner:14500000,customer:calcCustomer(14500000),last:'',note:''},
-    {SKU:'KPR-216',category:'HDMI',name:'HDMI 30M (Ayin B)',brand:'Ayin B',partner:0,customer:calcCustomer(0),last:'',note:''},
-
-    /* VGA */
-    {SKU:'KPR-300',category:'VGA',name:'VGA 1.5M',brand:'VGA',partner:650000,customer:calcCustomer(650000),last:'',note:''},
-    {SKU:'KPR-301',category:'VGA',name:'VGA 3M',brand:'VGA',partner:1200000,customer:calcCustomer(1200000),last:'',note:''},
-    {SKU:'KPR-302',category:'VGA',name:'VGA 5M',brand:'VGA',partner:1600000,customer:calcCustomer(1600000),last:'',note:''},
-    {SKU:'KPR-303',category:'VGA',name:'VGA 10M',brand:'VGA',partner:4200000,customer:calcCustomer(4200000),last:'',note:''},
-    {SKU:'KPR-304',category:'VGA',name:'VGA 20M',brand:'VGA',partner:5200000,customer:calcCustomer(5200000),last:'',note:''},
-    {SKU:'KPR-305',category:'VGA',name:'VGA 30M',brand:'VGA',partner:0,customer:calcCustomer(0),last:'',note:''},
-
-    /* USB */
-    {SKU:'KPR-400',category:'USB',name:'USB 1.5M',brand:'USB',partner:850000,customer:calcCustomer(850000),last:'',note:''},
-    {SKU:'KPR-401',category:'USB',name:'USB 3M',brand:'USB',partner:1200000,customer:calcCustomer(1200000),last:'',note:''},
-    {SKU:'KPR-402',category:'USB',name:'USB 5M',brand:'USB',partner:2800000,customer:calcCustomer(2800000),last:'',note:''},
-    {SKU:'KPR-403',category:'USB',name:'USB 10M',brand:'USB',partner:5900000,customer:calcCustomer(5900000),last:'',note:''},
-    {SKU:'KPR-404',category:'USB',name:'USB 20M',brand:'USB',partner:6900000,customer:calcCustomer(6900000),last:'',note:''},
-
-    /* بچکرد (بسته‌هایی که داری) */
-    {SKU:'KPR-500',category:'بچکرد',name:'بچکرد 1 عدد',brand:'بچکرد',partner:450000,customer:calcCustomer(450000),last:'',note:''},
-    {SKU:'KPR-501',category:'بچکرد',name:'بچکرد 2 عدد',brand:'بچکرد',partner:850000,customer:calcCustomer(850000),last:'',note:''},
-    {SKU:'KPR-502',category:'بچکرد',name:'بچکرد 5 عدد',brand:'بچکرد',partner:1200000,customer:calcCustomer(1200000),last:'',note:''},
-    {SKU:'KPR-503',category:'بچکرد',name:'بچکرد 10 عدد',brand:'بچکرد',partner:1850000,customer:calcCustomer(1850000),last:'',note:''},
-    {SKU:'KPR-504',category:'بچکرد',name:'بچکرد 15 عدد',brand:'بچکرد',partner:2400000,customer:calcCustomer(2400000),last:'',note:''},
-    {SKU:'KPR-505',category:'بچکرد',name:'بچکرد 20 عدد',brand:'بچکرد',partner:3500000,customer:calcCustomer(3500000),last:'',note:''},
-    {SKU:'KPR-506',category:'بچکرد',name:'بچکرد 30 عدد',brand:'بچکرد',partner:0,customer:calcCustomer(0),last:'',note:''},
-
-    /* فلکسی */
-    {SKU:'KPR-600',category:'فلکسی',name:'11 نمره فلکسی',brand:'فلکسی',partner:192000,customer:calcCustomer(192000),last:'',note:''},
-    {SKU:'KPR-601',category:'فلکسی',name:'13 نمره فلکسی',brand:'فلکسی',partner:214000,customer:calcCustomer(214000),last:'',note:''},
-    {SKU:'KPR-602',category:'فلکسی',name:'16 نمره فلکسی',brand:'فلکسی',partner:257600,customer:calcCustomer(257600),last:'',note:''},
-    {SKU:'KPR-603',category:'فلکسی',name:'21 نمره فلکسی',brand:'فلکسی',partner:323200,customer:calcCustomer(323200),last:'',note:''},
-    {SKU:'KPR-604',category:'فلکسی',name:'25 نمره فلکسی',brand:'فلکسی',partner:466200,customer:calcCustomer(466200),last:'',note:''},
-    {SKU:'KPR-605',category:'فلکسی',name:'29 نمره فلکسی',brand:'فلکسی',partner:540100,customer:calcCustomer(540100),last:'',note:''},
-    {SKU:'KPR-606',category:'فلکسی',name:'36 نمره فلکسی',brand:'فلکسی',partner:861800,customer:calcCustomer(861800),last:'',note:''}
-  ];
-
-  // UI refs
-  const q = byId('q');
-  const filterCat = byId('filterCat');
-  const priceType = byId('priceType');
-  const productsTableBody = document.querySelector('#productsTable tbody');
-  const cartList = byId('cartList');
-  const totalEl = byId('total');
-  const csvArea = byId('csv');
-
-  // load sample
-  byId('loadSample').addEventListener('click',()=>{
-    products = sample.map(p => Object.assign({}, p)); // clone
-    rebuildCats(); renderProducts(); saveState();
-    alert('نمونه بارگذاری شد — ' + products.length + ' محصول');
+function renderProducts(){
+  const qv=q.value.trim().toLowerCase();
+  const cat=filterCat.value;
+  const ptype=priceType.value;
+  productsArea.innerHTML='';
+  products.forEach((p,idx)=>{
+    if(cat && p.category!==cat) return;
+    if(qv && !(p.SKU.toLowerCase().includes(qv)||p.name.toLowerCase().includes(qv))) return;
+    const price=ptype==='partner'?p.partner:p.customer;
+    const div=document.createElement('div'); div.className='product-card';
+    div.innerHTML=`<div class="product-name">${p.name}</div>
+    <div class="product-brand">${p.brand||'-'}</div>
+    <div class="product-category">${p.category}</div>
+    <div class="price">${fmt(price)}</div>
+    <div style="display:flex;gap:6px;justify-content:flex-end">
+      <input data-idx="${idx}" class="qty" type="number" value="1" min="1" style="width:50px;padding:4px;border-radius:6px;border:1px solid #eee"/>
+      <button data-idx="${idx}" class="btn addBtn small">افزودن</button>
+    </div>`;
+    productsArea.appendChild(div);
   });
+  document.querySelectorAll('.addBtn').forEach(b=>b.addEventListener('click',onAdd));
+}
 
-  // clear
-  byId('clearBtn').addEventListener('click',()=>{ q.value=''; filterCat.value=''; priceType.value='customer'; renderProducts(); });
+function onAdd(e){
+  const idx=Number(e.currentTarget.dataset.idx);
+  const qty=Number(e.currentTarget.closest('.product-card').querySelector('.qty').value)||1;
+  const ptype=priceType.value;
+  const product=products[idx];
+  const unit=ptype==='partner'?product.partner:product.customer;
+  addToCart({sku:product.SKU,name:product.name,unit:unit,qty:qty});
+}
 
-  // CSV parse
-  byId('loadCsv').addEventListener('click',()=>{
-    const raw = csvArea.value.trim();
-    if(!raw){ alert('CSV خالیه یا paste نشده'); return; }
-    const lines = raw.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length);
-    const parsed = [];
-    lines.forEach((ln,i)=>{
-      const cols = ln.split(',');
-      if(cols.length < 6){ console.warn('ردیف نادرست',ln); return; }
-      // parse numbers safely: remove commas and non-digits
-      const partnerNum = Number(String(cols[4]||'').replace(/[^\d\-]/g,'')) || 0;
-      const customerNum = Number(String(cols[5]||'').replace(/[^\d\-]/g,'')) || calcCustomer(partnerNum);
-      const obj = {
-        SKU:cols[0].trim()||('CSV-'+i),
-        category:cols[1].trim(),
-        name:cols[2].trim(),
-        brand:cols[3].trim(),
-        partner: partnerNum,
-        customer: customerNum,
-        last: (cols[6]||'').trim(),
-        note: (cols[7]||'').trim()
-      };
-      parsed.push(obj);
-    });
-    products = parsed;
-    rebuildCats(); renderProducts(); saveState();
-    alert('بارگذاری انجام شد — '+products.length+' محصول')
+function addToCart(item){
+  const found=cart.find(c=>c.sku===item.sku && c.unit===item.unit);
+  if(found) found.qty+=item.qty; else cart.push(item);
+  renderCart();
+}
+
+function renderCart(){
+  cartList.innerHTML='';
+  let sum=0;
+  cart.forEach((c,i)=>{
+    const lineTotal=c.unit*c.qty;
+    sum+=lineTotal;
+    const div=document.createElement('div'); div.className='cart-row';
+    div.innerHTML=`<div style="flex:1"><strong>${c.name}</strong><div class="muted">${c.sku} • ${c.qty} × ${fmt(c.unit)}</div></div>
+    <div style="text-align:left"><div>${fmt(lineTotal)}</div>
+    <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end">
+      <button class="btn small" data-i="${i}" data-act="inc">+</button>
+      <button class="btn small" data-i="${i}" data-act="dec">-</button>
+      <button class="btn small" data-i="${i}" data-act="rem">حذف</button>
+    </div></div>`;
+    cartList.appendChild(div);
   });
-
-  byId('exportJson').addEventListener('click',()=>{
-    const data = JSON.stringify(products, null, 2);
-    const blob = new Blob([data],{type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'keeprice_products.json'; a.click(); URL.revokeObjectURL(url);
-  });
-
-  function rebuildCats(){
-    const cats = Array.from(new Set(products.map(p=>p.category))).filter(Boolean);
-    filterCat.innerHTML = '<option value="">همه دسته‌ها</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
-  }
-
-  function renderProducts(){
-    const qv = q.value.trim().toLowerCase();
-    const cat = filterCat.value;
-    const ptype = priceType.value;
-    productsTableBody.innerHTML = '';
-    products.forEach((p,idx)=>{
-      if(cat && p.category !== cat) return;
-      if(qv){ const s = (p.SKU+' '+p.name+' '+p.brand+' '+p.category).toLowerCase(); if(!s.includes(qv)) return; }
-      // ensure both prices exist: if customer missing, compute from partner
-      if(!p.customer || p.customer === 0) p.customer = calcCustomer(p.partner);
-      const price = ptype==='partner' ? p.partner : p.customer;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${p.SKU}</td><td style="max-width:260px">${p.name}<div class="muted">${p.note}</div></td><td>${p.brand}</td><td>${p.category}</td><td class="price">${fmt(price)}</td><td><div style="display:flex;gap:6px;justify-content:flex-end"><input data-idx="${idx}" class="qty" type="number" value="1" min="1" style="width:74px;padding:6px;border-radius:6px;border:1px solid #eee" /><button data-idx="${idx}" class="btn addBtn small">افزودن</button></div></td>`;
-      productsTableBody.appendChild(tr);
-    });
-    // wire buttons
-    document.querySelectorAll('.addBtn').forEach(b=>b.addEventListener('click',onAdd));
-  }
-
-  function onAdd(e){
-    const idx = Number(e.currentTarget.dataset.idx);
-    const row = e.currentTarget.closest('tr');
-    const qtyInput = row.querySelector('.qty');
-    const qty = Number(qtyInput.value)||1;
-    const ptype = priceType.value;
-    const product = products[idx];
-    const unit = ptype==='partner' ? product.partner : product.customer;
-    addToCart({sku:product.SKU,name:product.name,unit:unit,qty:qty});
-  }
-
-  function addToCart(item){
-    const found = cart.find(c=>c.sku===item.sku && c.unit===item.unit);
-    if(found){ found.qty += item.qty; } else cart.push(item);
-    saveState(); renderCart();
-  }
-
-  function renderCart(){
-    cartList.innerHTML = '';
-    let sum = 0;
-    cart.forEach((c, i)=>{
-      const lineTotal = Number(c.unit) * Number(c.qty);
-      sum += lineTotal;
-      const div = document.createElement('div'); div.className='cart-row';
-      div.innerHTML = `<div style="flex:1"><strong>${c.name}</strong><div class="muted">${c.sku} • ${c.qty} × ${fmt(c.unit)}</div></div><div style="text-align:left"><div>${fmt(lineTotal)}</div><div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end"><button class="btn small" data-i="${i}" data-act="inc">+</button><button class="btn small secondary" data-i="${i}" data-act="dec">-</button><button class="btn small secondary" data-i="${i}" data-act="rem">حذف</button></div></div>`;
-      cartList.appendChild(div);
-    });
-    totalEl.textContent = 'جمع کل: ' + fmt(sum);
-    // bind cart buttons
-    cartList.querySelectorAll('button').forEach(b=>b.addEventListener('click', (e)=>{
-      const i = Number(e.currentTarget.dataset.i); const act = e.currentTarget.dataset.act;
+  totalEl.textContent='جمع کل: '+fmt(sum);
+  cartList.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',e=>{
+      const i=Number(e.currentTarget.dataset.i),act=e.currentTarget.dataset.act;
       if(act==='inc') cart[i].qty++;
-      if(act==='dec') { cart[i].qty = Math.max(1, cart[i].qty-1); }
+      if(act==='dec') cart[i].qty=Math.max(1,cart[i].qty-1);
       if(act==='rem') cart.splice(i,1);
-      saveState(); renderCart();
-    }));
-  }
-
-  byId('clearCart').addEventListener('click',()=>{ if(confirm('پاک کردن کل سبد؟')){ cart=[]; saveState(); renderCart(); } });
-
-  byId('printBtn').addEventListener('click',()=>{
-    // build printable HTML
-    const lines = cart.map(c=>`<tr><td>${c.sku}</td><td>${c.name}</td><td style="text-align:left">${c.qty}</td><td style="text-align:left">${Number(c.unit).toLocaleString('fa-IR')}</td><td style="text-align:left">${(Number(c.unit)*c.qty).toLocaleString('fa-IR')}</td></tr>`).join('');
-    const sum = cart.reduce((s,c)=>s+Number(c.unit)*c.qty,0);
-    const html = `<!doctype html><html lang="fa"><head><meta charset="utf-8"><title>فاکتور</title><style>body{font-family:Tahoma;direction:rtl;padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:right}h2{margin:0 0 12px}</style></head><body><h2>فاکتور — KeePrice</h2><table><thead><tr><th>SKU</th><th>نام کالا</th><th>تعداد</th><th>قیمت واحد (تومان)</th><th>مبلغ</th></tr></thead><tbody>${lines}</tbody></table><h3 style="text-align:left">جمع کل: ${sum.toLocaleString('fa-IR')} تومان</h3></body></html>`;
-    const w = window.open('','_blank'); w.document.write(html); w.document.close();
+      renderCart();
+    });
   });
+}
 
-  // search
-  q.addEventListener('input',()=>renderProducts()); filterCat.addEventListener('change',()=>renderProducts()); priceType.addEventListener('change',()=>renderProducts());
+byId('clearBtn').addEventListener('click',()=>{ q.value=''; filterCat.value=''; priceType.value='partner'; renderProducts(); });
+byId('clearCart').addEventListener('click',()=>{ if(confirm('پاک کردن کل سبد؟')){ cart=[]; renderCart(); } });
+byId('printBtn').addEventListener('click',()=>{
+  const lines=cart.map(c=>`<tr><td>${c.sku}</td><td>${c.name}</td><td>${c.qty}</td><td>${c.unit.toLocaleString('fa-IR')}</td><td>${(c.unit*c.qty).toLocaleString('fa-IR')}</td></tr>`).join('');
+  const sum=cart.reduce((s,c)=>s+c.unit*c.qty,0);
+  const html=`<!doctype html><html lang="fa"><head><meta charset="utf-8"><title>فاکتور</title>
+  <style>body{font-family:Tahoma;direction:rtl;padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:right}</style></head><body>
+  <h2>فاکتور — KeePrice</h2><table><thead><tr><th>SKU</th><th>نام کالا</th><th>تعداد</th><th>قیمت واحد</th><th>مبلغ</th></tr></thead><tbody>${lines}</tbody></table>
+  <h3 style="text-align:left">جمع کل: ${sum.toLocaleString('fa-IR')} تومان</h3></body></html>`;
+  const w=window.open('','_blank'); w.document.write(html); w.document.close();
+});
 
-  // persistence
-  function saveState(){ localStorage.setItem('kee_products', JSON.stringify(products)); localStorage.setItem('kee_cart', JSON.stringify(cart)); }
-  function loadState(){ try{ const p = localStorage.getItem('kee_products'); const c = localStorage.getItem('kee_cart'); if(p) products = JSON.parse(p); if(c) cart = JSON.parse(c); }catch(e){console.warn(e);} }
-
-  // init
-  loadState(); if(!products.length) products = sample.slice(); rebuildCats(); renderProducts(); renderCart();
-
+q.addEventListener('input',renderProducts);
+filterCat.addEventListener('change',renderProducts);
+priceType.addEventListener('change',renderProducts);
 })();
 </script>
 </body>
