@@ -13,7 +13,7 @@
   --muted:#d0d0d0;
   --text:#111;
 }
-body{font-family:Tahoma,Arial, sans-serif;direction:rtl;background:var(--bg);margin:0;color:var(--text)}
+body{font-family:Tahoma,Arial,sans-serif;direction:rtl;background:var(--bg);margin:0;color:var(--text)}
 header{background:linear-gradient(90deg,var(--accent) 0%,#6b9ddb 100%);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
 header h1{margin:0;font-size:20px;font-weight:600}
 .container{display:grid;grid-template-columns:1fr 380px;gap:18px;padding:18px}
@@ -37,6 +37,8 @@ button{cursor:pointer}
 .total{font-size:18px;font-weight:800;margin-top:12px;color:var(--accent2)}
 .sidebar{position:sticky;top:18px;height:fit-content}
 .muted{color:var(--muted);font-size:12px}
+#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);justify-content:center;align-items:center}
+#modalContent{background:#fff;padding:20px;border-radius:12px;max-width:400px;width:90%;position:relative}
 @media(max-width:920px){.container{grid-template-columns:1fr;padding:12px}.sidebar{position:static}}
 </style>
 </head>
@@ -45,11 +47,10 @@ button{cursor:pointer}
 <div style="width:44px;height:44px;border-radius:8px;overflow:hidden">
   <img src="https://uploadkon.ir/uploads/76bd07_25photo-2025-10-06-18-29-38-removebg-preview.png" alt="Logo" style="width:100%;height:100%;object-fit:cover">
 </div>
-
-  <div>
-    <h1>KeePrice — فروشگاه مدرن</h1>
-    <div class="muted">انتخاب کالا → نوع قیمت → افزودن به سبد</div>
-  </div>
+<div>
+  <h1>KeePrice — فروشگاه مدرن</h1>
+  <div class="muted">انتخاب کالا → نوع قیمت → افزودن به سبد</div>
+</div>
 </header>
 
 <div class="container">
@@ -62,6 +63,7 @@ button{cursor:pointer}
         <option value="customer">قیمت مشتری</option>
       </select>
       <button class="btn small" id="clearBtn">پاک‌سازی</button>
+      <button class="btn small" id="showNewProduct">افزودن محصول جدید</button>
     </div>
 
     <div class="products-grid" id="productsArea"></div>
@@ -83,6 +85,22 @@ button{cursor:pointer}
   </aside>
 </div>
 
+<!-- پنجره شناور افزودن محصول جدید -->
+<div id="modal">
+  <div id="modalContent">
+    <h3>افزودن محصول جدید</h3>
+    <input id="newName" placeholder="نام محصول" style="width:100%;margin-bottom:6px">
+    <input id="newSKU" placeholder="SKU" style="width:100%;margin-bottom:6px">
+    <input id="newCat" placeholder="دسته" style="width:100%;margin-bottom:6px">
+    <input id="newPartner" placeholder="قیمت همکار" type="number" style="width:100%;margin-bottom:6px">
+    <input id="newCustomer" placeholder="قیمت مشتری" type="number" style="width:100%;margin-bottom:12px">
+    <div style="display:flex;gap:6px;justify-content:flex-end">
+      <button class="btn small" id="addNewProduct">افزودن</button>
+      <button class="btn small" id="closeModal">لغو</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
 let products=[], cart=[];
@@ -90,99 +108,226 @@ let products=[], cart=[];
 function fmt(n){ return Number(n).toLocaleString('fa-IR') + ' تومان'; }
 function byId(id){ return document.getElementById(id); }
 
-// تمام محصولات با قیمت همکار
+// داده اولیه
 const rawProducts=[
-{SKU:'IR-AMP-2',category:'آداپتور',name:'ایرانی آمپر ۲',partner:950000},
-{SKU:'2A-VOLT',category:'آداپتور',name:'۲ آمپر ولت',partner:1250000},
-{SKU:'5A-LAP',category:'آداپتور',name:'لپتابی آمپر ۵',partner:2450000},
-{SKU:'5A-IND',category:'آداپتور',name:'صنعتی آمپر ۵',partner:3100000},
-{SKU:'10A-IND',category:'آداپتور',name:'صنعتی امیر ۱۰',partner:4800000},
-{SKU:'15A-IND',category:'آداپتور',name:'صنعتی امیر ۱۵',partner:5400000},
-{SKU:'20A-IND',category:'آداپتور',name:'صنعتی آمپر ۲۰',partner:6200000},
-{SKU:'30A-IND',category:'آداپتور',name:'صنعتی آمپر ۳۰',partner:7000000}, 
-{SKU:'K07-64',category:'کابل ترکیبی',name:'کابل ۰۷/۶۴',partner:90000},
-{SKU:'K07-96-CCA',category:'کابل ترکیبی',name:'کابل 07/96 cca',partner:155000},
-{SKU:'K07-96-CU',category:'کابل ترکیبی',name:'کابل 07/96 مس',partner:185000},
-{SKU:'K08-96-CCA',category:'کابل ترکیبی',name:'کابل 08/96 cca',partner:135000},
-{SKU:'UTP-CU',category:'شبکه',name:'کابل UTP CU 305M',partner:215000},
-{SKU:'UTP-CCA',category:'شبکه',name:'کابل UTP CCA 305M',partner:135000},
-{SKU:'SFTP-CU',category:'شبکه',name:'کابل SFTP CU 500M',partner:265000},
-{SKU:'SFTP-CCA',category:'شبکه',name:'کابل SFTP CCA 500M',partner:160000},
-{SKU:'HDMI-1.5M',category:'HDMI',name:'HDMI 1/5M',partner:1200000},
-{SKU:'HDMI-3M',category:'HDMI',name:'HDMI 3M',partner:1800000},
-{SKU:'HDMI-SM',category:'HDMI',name:'HDMI SM',partner:4800000},
-{SKU:'HDMI-10M',category:'HDMI',name:'HDMI 10M',partner:6500000},
-{SKU:'VGA-1.5M',category:'VGA',name:'VGA 1/5M',partner:650000},
-{SKU:'VGA-3M',category:'VGA',name:'VGA 3M',partner:1200000},
-{SKU:'USB-1.5M',category:'USB',name:'USB 1/5M',partner:850000},
-{SKU:'BCHK-1',category:'بچکرد',name:'۱ بچکرد',partner:450000},
-{SKU:'FLEX-11',category:'فلکسی',name:'۱۱ نمره فلکسی',partner:192000},
-{SKU:'FLEX-13',category:'فلکسی',name:'۱۳ نمره فلکسی',partner:214000},
-{SKU:'FLEX-16',category:'فلکسی',name:'۱۶ نمره فلکسی',partner:323200},
-{SKU:'FLEX-21',category:'فلکسی',name:'۲۱ نمره فلکسی',partner:466200},
-{SKU:'FLEX-25',category:'فلکسی',name:'۲۵ نمره فلکسی',partner:540100},
-{SKU:'FLEX-29',category:'فلکسی',name:'۲۹ نمره فلکسی',partner:861800},
-{SKU:'FLEX-36',category:'فلکسی',name:'۳۶ نمره فلکسی',partner:1200000}
+{SKU:'WDP500',category:'هارد',name:'هارد بنفش 500 گیگ شرکتی',partner:1150000},
+{SKU:'WDP1O',category:'هارد',name:'هارد بنفش 1 ترابایت اصلی',partner:6700000},
+{SKU:'WDP1',category:'هارد',name:'هارد بنفش 1 ترابایت شرکتی',partner:3900000},
+{SKU:'WDP1.2',category:'هارد',name:'هارد بنفش 1 ترابایت شرکتی در جه 2',partner:3500000},
+{SKU:'WDP2O',category:'هارد',name:'هارد بنفش 2 ترابایت اصلی',partner:8000000},
+{SKU:'WDP2',category:'هارد',name:'هارد بنفش 2 ترابایت شرکتی',partner:6900000},
+{SKU:'WDP2.2',category:'هارد',name:'هارد بنفش 2 ترابایت شرکتی درجه 2',partner:6500000},
+{SKU:'WDP4',category:'هارد',name:'هارد بنفش 4 ترابایت اصلی',partner:11300000},
+{SKU:'SWE8',category:'سوییچ',name:'سوییچ الکاتو 8 پورت معمولی',partner:650000},
+{SKU:'SWE4',category:'سوییچ',name:'سوییچ الکاتو 4 پورت معمولی',partner:480000},
+{SKU:'SWE4POE',category:'سوییچ',name:'سوییچ الکاتو 4 پورت POE',partner:2000000},
+{SKU:'SWE51000',category:'سوییچ',name:'سوییچ الکاتو 5 پورت1000 بدون POE',partner:900000},
+{SKU:'SWE4POEE',category:'سوییچ',name:' سوییچ الکاتو 4 پورت اقتصادیPOE',partner:1450000},
+{SKU:'SWE8POE',category:'سوییچ',name:'سوییچ الکاتو 8 پورت 100POE',partner:2600000},
+{SKU:'SWE81000',category:'سوییچ',name:'سوییچ الکاتو 8 پورت1000 بدون POE',partner:1350000},
+{SKU:'SWE81000POE',category:'سوییچ',name:'سوییچ الکاتو 8 پورت1000  POE',partner:3600000},
+{SKU:'SWE8120POE',category:'سوییچ',name:'سوییچ الکاتو 8 پورت120W  POE',partner:3400000},
+{SKU:'ADAB2P',category:'آدابتور',name: 'آدابتور 2 آمپر پاور زرد',partner:125000},
+{SKU:'ADAB2PP',category:'آدابتور',name: 'آدابتور 2 آمپر پاور بنفش',partner:130000},
+{SKU:'ADAB2V',category:'آدابتور',name: 'آدابتور 2 آمپر ولت',partner:140000},
+{SKU:'ADAB2L',category:'آدابتور',name: 'آدابتور 2 آمپر لایون',partner:125000},
+{SKU:'ADAB5P',category:'آدابتور',name: 'آدابتور 5 آمپر پاور آبی',partner:250000},
+{SKU:'ADAB5A',category:'آدابتور',name: 'آدابتور 5 آمپرادلای ',partner:280000},
+{SKU:'ADABI5',category:'آدابتور',name: 'آدابتور 5 آمپر صنعتی ',partner:350000},
+{SKU:'ADABI10',category:'آدابتور',name: 'آدابتور 10 آمپر صنعتی ',partner:480000},
+{SKU:'ADABI15',category:'آدابتور',name: 'آدابتور 15 آمپر صنعتی ',partner:540000},
+{SKU:'ADABI20',category:'آدابتور',name: 'آدابتور 20 آمپر صنعتی ',partner:620000},
+{SKU:'ADABI30',category:'آدابتور',name: 'آدابتور 30 آمپر صنعتی ',partner:700000},
+{SKU:'FISHN',category:'آدابتور',name: ' فیش آدابتوری نری ',partner:10000},
+{SKU:'FISHM',category:'آدابتور',name: ' فیش آدابتوری مادگی ',partner:10000},
+{SKU:'KA0796',category:'کابل',name: ' کابل ترکیبی 07/96 برق نیم',partner:16000},
+{SKU:'KA0796M',category:'کابل',name: ' کابل ترکیبی 07/96 مس برق یک',partner:19000},
+{SKU:'KACCA',category:'کابل',name: ' کابل ترکیبی 08/96 CCA برق نیم',partner:14000},
+{SKU:'KAUC',category:'کابل',name: ' کابل شبکه UTP CCA 30M',partner:14000},
+{SKU:'KACU',category:'کابل',name: ' کابل شبکه UTP CU 30M ',partner:22000},
+{SKU:'KASCU',category:'کابل',name: ' کابل شبکه SFTP CU 500M ',partner:27000},
+{SKU:'KAUSO',category:'کابل',name: ' کابل شبکه UTP SFTP OUTDOOR  500M ',partner:35000},
+{SKU:'KAP',category:'کابل',name: ' کابل پاور ',partner:100000},
+{SKU:'KA2D',category:'کابل',name: ' سیم دوزوج ',partner:7000},
+{SKU:'KA0764',category:'کابل',name: ' کابل ترکیبی 07/64 الیاژ ',partner:10000},
+{SKU:'HDMI1',category:'کابل',name: ' HDMI 1/5M ',partner:80000},
+{SKU:'HDMI3',category:'کابل',name: ' HDMI 3M ',partner:130000},
+{SKU:'HDMI5',category:'کابل',name: ' HDMI 5M ',partner:200000},
+{SKU:'HDMI10',category:'کابل',name: ' HDMI 10M ',partner:330000},
+{SKU:'HDMI15',category:'کابل',name: ' HDMI 15M ',partner:480000},
+{SKU:'HDMI20',category:'کابل',name: ' HDMI 20M ',partner:650000},
+{SKU:'HDMI4K',category:'کابل',name: ' HDMI 4K 1/5M ',partner:180000},
+{SKU:'HDMI4K3',category:'کابل',name: ' HDMI 4K 3M ',partner:270000},
+{SKU:'HDMI4K5',category:'کابل',name: ' HDMI 4K 5M ',partner:380000},
+{SKU:'HDMI4K10',category:'کابل',name: ' HDMI 4K 10M ',partner:790000},
+{SKU:'HDMI4K15',category:'کابل',name: ' HDMI 4K 15M ',partner:1200000},
+{SKU:'HDMI4K20',category:'کابل',name: ' HDMI 4K 20M ',partner:1400000},
+{SKU:'MODEMUX400',category:'مودم',name: ' مودم نزتک ux400 ',partner:3400000},
+{SKU:'MODEMUX100',category:'مودم',name: ' مودم نزتک ux100 ',partner:2900000},
+{SKU:'BSTK15',category:'بست',name: ' بست کمربندی 15 ',partner:10000},
+{SKU:'BSTK20',category:'بست',name: ' بست کمربندی 20 ',partner:10000},
+{SKU:'BSTK25',category:'بست',name: ' بست کمربندی 25 ',partner:10000},
+{SKU:'BSTK30',category:'بست',name: ' بست کمربندی 30 ',partner:10000},
+{SKU:'BSTF13',category:'بست',name: ' بست فلکسی 13 ',partner:2000},
+{SKU:'BSTF16',category:'بست',name: ' بست فلکسی 16 ',partner:3000},
+{SKU:'BSTF21',category:'بست',name: ' بست فلکسی 21 ',partner:4000},
+{SKU:'BSTF25',category:'بست',name: ' بست فلکسی 25 ',partner:5000},
+{SKU:'BNCP',category:'برل-BNC',name: ' پیچی معمولی BNC ',partner:15000},
+{SKU:'BNCPP',category:'برل-BNC',name: ' پیچ پرسی BNC ',partner:15000},
+{SKU:'BNCP',category:'برل-BNC',name: ' پیچی ETTO BNC ',partner:22000},
+{SKU:'BNCP',category:'برل-BNC',name: ' پیچ خوب BNC ',partner:17000},
+{SKU:'BRLOUT',category:'برل-BNC',name: ' برل شبکه اوت دور ',partner:15000},
+{SKU:'BRLO',category:'برل-BNC',name: ' برل شبکه اصلی ',partner:15000},
+{SKU:'BRLVG',category:'برل-BNC',name: ' برل VG ',partner:15000},
+{SKU:'BRLHDMI',category:'برل-BNC',name: ' برل HDMI ',partner:15000},
+{SKU:'BRLBNC',category:'برل-BNC',name: ' برل BNC ',partner:15000},
+{SKU:'SUKTETTO',category:'سوکت',name: ' سوکت شبکه میان گذر اتو اصلی ',partner:5000},
+{SKU:'SUKTETTOSFTP',category:'سوکت',name: ' سوکت شبکه ETTO SFTP ',partner:7000},
+{SKU:'SUKTKNETSFTP',category:'سوکت',name: ' سوکت شبکه SFTP K-NET فلزی ',partner:9000},
+{SKU:'SUKTKNET',category:'سوکت',name: ' سوکت شبکه  K-NET  ',partner:6000},
+{SKU:'SUKTACH',category:'سوکت',name: ' آچار شبکه ',partner:220000},
+{SKU:'CAMBOXW13',category:'کمباکس',name: ' کمباکس 13*13 سفید  ',partner:60000},
+{SKU:'CAMBOXG13',category:'کمباکس',name: ' کمباکس 13*13 طوسی  ',partner:60000},
+{SKU:'CAMBOXW15',category:'کمباکس',name: ' کمباکس 15*15 سفید  ',partner:80000},
+{SKU:'CAMBOXG15',category:'کمباکس',name: ' کمباکس 15*15 طوسی  ',partner:80000},
+{SKU:'CAMBOXlola14',category:'کمباکس',name: ' کمباکس 14*14 لولایی  ',partner:80000},
+{SKU:'CAMBOXPL',category:'کمباکس',name: ' کمباکس پرو ال   ',partner:120000},
+{SKU:'CAMBOX360',category:'کمباکس',name: ' کمباکس 360  ',partner:90000},
+{SKU:'CAMBOXSYCLE',category:'کمباکس',name: ' کمباکس گرد  ',partner:60000},
+{SKU:'CAMBOXW16',category:'کمباکس',name: ' کمباکس 16*16 سفید  ',partner:90000},
+{SKU:'CAMBOXG16',category:'کمباکس',name: ' کمباکس 16*16 طوسی  ',partner:90000},
+{SKU:'CAMBOXFIXL',category:'کمباکس',name: ' کمباکس فیکس ال  ',partner:60000},
+{SKU:'EXHDMI30',category:'اکستندر',name: ' اکستندر HDMI 30M ',partner:250000},
+{SKU:'EXHDMI60',category:'اکستندر',name: ' اکستندر HDMI 60M ',partner:2300000},
+{SKU:'EXHDMIUSB60',category:'اکستندر',name: ' اکستندر HDMI 60M + USB ',partner:3300000},
+{SKU:'EXUSBK60',category:'اکستندر',name: ' اکستندر USB 60M K-NET ',partner:890000},
+{SKU:'EXUSB60',category:'اکستندر',name: ' اکستندر USB 60M ',partner:380000},
+{SKU:'POWER4',category:'محافظ برق',name: ' سیار 4 خانه ',partner:250000},
+{SKU:'POWER2',category:'محافظ برق',name: ' دوشاخه برق',partner:30000},
+{SKU:'POWERM',category:'محافظ برق',name: ' مادگی برق ',partner:30000},
+{SKU:'POWER23',category:'محافظ برق',name: ' تبدیل 3به 2 برق ',partner:50000},
+{SKU:'POWER3',category:'محافظ برق',name: ' سه راه توپی ',partner:250000},
+{SKU:'VGA1',category:' کابل ',name: ' کابل VGA 1/5  متری ',partner:70000},
+{SKU:'VGA3',category:' کابل ',name: ' کابل VGA 3  متری ',partner:120000},
+{SKU:'VGA5',category:' کابل ',name: ' کابل VGA 5  متری ',partner:160000},
+{SKU:'VGA10',category:' کابل ',name: ' کابل VGA 10  متری ',partner:330000},
+{SKU:'VGA15',category:' کابل ',name: ' کابل VGA 15  متری ',partner:420000},
+{SKU:'VGA20',category:' کابل ',name: ' کابل VGA 20  متری ',partner:520000},
+{SKU:'USB1',category:' کابل ',name: ' کابل USB 1/5  متری ',partner:55000},
+{SKU:'USB3',category:' کابل ',name: ' کابل USB 3  متری ',partner:90000},
+{SKU:'USB5',category:' کابل ',name: ' کابل USB 5  متری ',partner:120000},
+{SKU:'USB10',category:' کابل ',name: ' کابل USB 10  متری ',partner:280000},
+{SKU:'USB15',category:' کابل ',name: ' کابل USB 15  متری ',partner:590000},
+{SKU:'USB20',category:' کابل ',name: ' کابل USB 20  متری ',partner:690000},
+{SKU:'BACH1',category:' کابل ',name: ' کابل بچکرد 1  متری ',partner:40000},
+{SKU:'BACH2',category:' کابل ',name: ' کابل بچکرد 2  متری ',partner:50000},
+{SKU:'BACH3',category:' کابل ',name: ' کابل بچکرد 3  متری ',partner:60000},
+{SKU:'BACH5',category:' کابل ',name: ' کابل بچکرد 5  متری ',partner:90000},
+{SKU:'BACH10',category:' کابل ',name: ' کابل بچکرد 10  متری ',partner:120000},
+{SKU:'BACH15',category:' کابل ',name: ' کابل بچکرد 15  متری ',partner:190000},
+{SKU:'BACH20',category:' کابل ',name: ' کابل بچکرد 20  متری ',partner:240000},
+{SKU:'BACH30',category:' کابل ',name: ' کابل بچکرد 30  متری ',partner:350000},
+{SKU:'FLAX11',category:' فلکسی ',name: ' فلکسی نمره 11 ',partner:19500},
+{SKU:'FLAX13',category:' فلکسی ',name: ' فلکسی نمره 13 ',partner:21500},
+{SKU:'FLAX16',category:' فلکسی ',name: ' فلکسی نمره 16 ',partner:26000},
+{SKU:'FLAX21',category:' فلکسی ',name: ' فلکسی نمره 21 ',partner:32500},
+{SKU:'FLAX25',category:' فلکسی ',name: ' فلکسی نمره 25 ',partner:47000},
+{SKU:'FLAX29',category:' فلکسی ',name: ' فلکسی نمره 29 ',partner:55000},
+{SKU:'FLAX36',category:' فلکسی ',name: ' فلکسی نمره 36 ',partner:87000},
+{SKU:'PFLAX13',category:' فلکسی ',name: 'پلی فلکسی نمره 13 ',partner:11500},
+{SKU:'PFLAX16',category:' فلکسی ',name: ' پلی فلکسی نمره 16 ',partner:13000},
+{SKU:'PFLAX21',category:' فلکسی ',name: ' پلی فلکسی نمره 21 ',partner:18000},
+{SKU:'PFLAX25',category:' فلکسی ',name: ' پلی فلکسی نمره 25 ',partner:26000},
+{SKU:'PFLAX29',category:' فلکسی ',name: 'پلی فلکسی نمره 29 ',partner:35000},
+{SKU:'DOCT',category:' داکت ',name: ' داکت نمره 1 ',partner:1111},
+{SKU:'DOCT1',category:' داکت ',name: ' داکت نمره 1/5 ',partner:1111},
+{SKU:'DOCT2',category:' داکت ',name: ' داکت نمره 2 ',partner:1111},
+{SKU:'DOCT2.5',category:' داکت ',name: ' داکت نمره 2/5 ',partner:1111},
+{SKU:'DOCT3',category:' داکت ',name: ' داکت نمره 3 ',partner:1111},
+{SKU:'DOCT4',category:' داکت ',name: ' داکت نمره 4 ',partner:1111},
+{SKU:'DOCT5',category:' داکت ',name: ' داکت نمره 5 ',partner:1111},
+{SKU:'DOCT6',category:' داکت ',name: ' داکت نمره 6 ',partner:1111},
+{SKU:'DOCTCH',category:' داکت ',name: ' داکت  چسبی نمره 1 ',partner:1111},
+{SKU:'DOCTCH1',category:' داکت ',name: ' 1/5 ',partner:1111},
+{SKU:'DOCTCH2',category:' داکت ',name: ' داکت  چسبی نمره 2 ',partner:1111},
+{SKU:'DOCTCH2.5',category:' داکت ',name: ' داکت  چسبی نمره 2/5 ',partner:1111},
+{SKU:'DOCTCH3',category:' داکت ',name: ' داکت  چسبی نمره 3 ',partner:1111},
+{SKU:'DOCTCH4',category:' داکت ',name: ' داکت  چسبی نمره 4 ',partner:1111},
+{SKU:'RAK4',category:' رک ',name: ' رک 4 یونیت سپکو  ',partner:1111},
+{SKU:'RAK6',category:' رک ',name: ' رک 6 یونیت   ',partner:1111},
+{SKU:'RAK7',category:' رک ',name: ' رک 7 یونیت   ',partner:1111},
 ];
 
-// ساخت قیمت مشتری با ۲۰٪ بیشتر
-products=rawProducts.map(p=>({...p,customer:Math.round(p.partner*1.2)}));
+// ایجاد قیمت مشتری
+products = rawProducts.map(p => ({
+  ...p,
+  customer: 
+    p.category === 'کابل' ? Math.round(p.partner * 0.5) : 
+    p.category === 'هارد' ? Math.round(p.partner * 1.50) : 
+    Math.round(p.partner * 1.1)
+}));
 
-const q=byId('q'), filterCat=byId('filterCat'), priceType=byId('priceType'), productsArea=byId('productsArea'), cartList=byId('cartList'), totalEl=byId('total');
+const q = byId('q'), filterCat = byId('filterCat'), priceType = byId('priceType'), productsArea = byId('productsArea'), cartList = byId('cartList'), totalEl = byId('total');
+const modal = byId('modal');
 
 rebuildCats(); renderProducts(); renderCart();
 
+// دسته‌بندی
 function rebuildCats(){
-  const cats=Array.from(new Set(products.map(p=>p.category)));
-  filterCat.innerHTML='<option value="">همه دسته‌ها</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const cats = Array.from(new Set(products.map(p => p.category)));
+  filterCat.innerHTML = '<option value="">همه دسته‌ها</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
+// نمایش محصولات با امکان قیمت دلخواه
 function renderProducts(){
-  const qv=q.value.trim().toLowerCase();
-  const cat=filterCat.value;
-  const ptype=priceType.value;
-  productsArea.innerHTML='';
-  products.forEach((p,idx)=>{
-    if(cat && p.category!==cat) return;
-    if(qv && !(p.SKU.toLowerCase().includes(qv)||p.name.toLowerCase().includes(qv))) return;
-    const price=ptype==='partner'?p.partner:p.customer;
-    const div=document.createElement('div'); div.className='product-card';
-    div.innerHTML=`<div class="product-name">${p.name}</div>
-    <div class="product-brand">${p.brand||'-'}</div>
+  const qv = q.value.trim().toLowerCase();
+  const cat = filterCat.value;
+  const ptype = priceType.value;
+  productsArea.innerHTML = '';
+  products.forEach((p, idx) => {
+    if(cat && p.category !== cat) return;
+    if(qv && !(p.SKU.toLowerCase().includes(qv) || p.name.toLowerCase().includes(qv))) return;
+    const price = ptype === 'partner' ? p.partner : p.customer;
+    const div = document.createElement('div'); div.className = 'product-card';
+    div.innerHTML = `<div class="product-name">${p.name}</div>
+    <div class="product-brand">${p.brand || '-'}</div>
     <div class="product-category">${p.category}</div>
-    <div class="price">${fmt(price)}</div>
+    <div class="price"><input type="number" class="customPrice" value="${price}" style="width:100%;padding:4px;border-radius:6px;border:1px solid #ccc"></div>
     <div style="display:flex;gap:6px;justify-content:flex-end">
       <input data-idx="${idx}" class="qty" type="number" value="1" min="1" style="width:50px;padding:4px;border-radius:6px;border:1px solid #eee"/>
       <button data-idx="${idx}" class="btn addBtn small">افزودن</button>
     </div>`;
     productsArea.appendChild(div);
   });
-  document.querySelectorAll('.addBtn').forEach(b=>b.addEventListener('click',onAdd));
+  document.querySelectorAll('.addBtn').forEach(b => b.addEventListener('click', onAdd));
 }
 
+// افزودن به سبد با قیمت دلخواه
 function onAdd(e){
-  const idx=Number(e.currentTarget.dataset.idx);
-  const qty=Number(e.currentTarget.closest('.product-card').querySelector('.qty').value)||1;
-  const ptype=priceType.value;
-  const product=products[idx];
-  const unit=ptype==='partner'?product.partner:product.customer;
-  addToCart({sku:product.SKU,name:product.name,unit:unit,qty:qty});
+  const card = e.currentTarget.closest('.product-card');
+  const idx = Number(e.currentTarget.dataset.idx);
+  const qty = Number(card.querySelector('.qty').value) || 1;
+  const custom = Number(card.querySelector('.customPrice').value);
+  if(custom <= 0){ alert('قیمت معتبر نیست'); return; }
+  const product = products[idx];
+  addToCart({sku: product.SKU, name: product.name, unit: custom, qty: qty});
 }
 
 function addToCart(item){
-  const found=cart.find(c=>c.sku===item.sku && c.unit===item.unit);
-  if(found) found.qty+=item.qty; else cart.push(item);
+  const found = cart.find(c => c.sku === item.sku && c.unit === item.unit);
+  if(found) found.qty += item.qty; else cart.push(item);
   renderCart();
 }
 
+// نمایش سبد
 function renderCart(){
-  cartList.innerHTML='';
-  let sum=0;
-  cart.forEach((c,i)=>{
-    const lineTotal=c.unit*c.qty;
-    sum+=lineTotal;
-    const div=document.createElement('div'); div.className='cart-row';
-    div.innerHTML=`<div style="flex:1"><strong>${c.name}</strong><div class="muted">${c.sku} • ${c.qty} × ${fmt(c.unit)}</div></div>
+  cartList.innerHTML = '';
+  let sum = 0;
+  cart.forEach((c, i) => {
+    const lineTotal = c.unit * c.qty;
+    sum += lineTotal;
+    const div = document.createElement('div'); div.className = 'cart-row';
+    div.innerHTML = `<div style="flex:1"><strong>${c.name}</strong><div class="muted">${c.sku} • ${c.qty} × ${fmt(c.unit)}</div></div>
     <div style="text-align:left"><div>${fmt(lineTotal)}</div>
     <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end">
       <button class="btn small" data-i="${i}" data-act="inc">+</button>
@@ -191,33 +336,52 @@ function renderCart(){
     </div></div>`;
     cartList.appendChild(div);
   });
-  totalEl.textContent='جمع کل: '+fmt(sum);
-  cartList.querySelectorAll('button').forEach(b=>{
-    b.addEventListener('click',e=>{
-      const i=Number(e.currentTarget.dataset.i),act=e.currentTarget.dataset.act;
-      if(act==='inc') cart[i].qty++;
-      if(act==='dec') cart[i].qty=Math.max(1,cart[i].qty-1);
-      if(act==='rem') cart.splice(i,1);
+  totalEl.textContent = 'جمع کل: ' + fmt(sum);
+  cartList.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', e => {
+      const i = Number(e.currentTarget.dataset.i), act = e.currentTarget.dataset.act;
+      if(act === 'inc') cart[i].qty++;
+      if(act === 'dec') cart[i].qty = Math.max(1, cart[i].qty - 1);
+      if(act === 'rem') cart.splice(i, 1);
       renderCart();
     });
   });
 }
 
-byId('clearBtn').addEventListener('click',()=>{ q.value=''; filterCat.value=''; priceType.value='partner'; renderProducts(); });
-byId('clearCart').addEventListener('click',()=>{ if(confirm('پاک کردن کل سبد؟')){ cart=[]; renderCart(); } });
-byId('printBtn').addEventListener('click',()=>{
-  const lines=cart.map(c=>`<tr><td>${c.sku}</td><td>${c.name}</td><td>${c.qty}</td><td>${c.unit.toLocaleString('fa-IR')}</td><td>${(c.unit*c.qty).toLocaleString('fa-IR')}</td></tr>`).join('');
-  const sum=cart.reduce((s,c)=>s+c.unit*c.qty,0);
-  const html=`<!doctype html><html lang="fa"><head><meta charset="utf-8"><title>فاکتور</title>
+// دکمه‌ها
+byId('clearBtn').addEventListener('click', () => { q.value = ''; filterCat.value = ''; priceType.value = 'partner'; renderProducts(); });
+byId('clearCart').addEventListener('click', () => { if(confirm('پاک کردن کل سبد؟')){ cart = []; renderCart(); } });
+byId('printBtn').addEventListener('click', () => {
+  const lines = cart.map(c => `<tr><td>${c.sku}</td><td>${c.name}</td><td>${c.qty}</td><td>${(c.unit).toLocaleString('fa-IR')}</td><td>${(c.unit * c.qty).toLocaleString('fa-IR')}</td></tr>`).join('');
+  const sum = cart.reduce((s, c) => s + c.unit * c.qty, 0);
+  const html = `<!doctype html><html lang="fa"><head><meta charset="utf-8"><title>فاکتور</title>
   <style>body{font-family:Tahoma;direction:rtl;padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:right}</style></head><body>
   <h2>فاکتور — KeePrice</h2><table><thead><tr><th>SKU</th><th>نام کالا</th><th>تعداد</th><th>قیمت واحد</th><th>مبلغ</th></tr></thead><tbody>${lines}</tbody></table>
   <h3 style="text-align:left">جمع کل: ${sum.toLocaleString('fa-IR')} تومان</h3></body></html>`;
-  const w=window.open('','_blank'); w.document.write(html); w.document.close();
+  const w = window.open('', '_blank'); w.document.write(html); w.document.close();
 });
 
-q.addEventListener('input',renderProducts);
-filterCat.addEventListener('change',renderProducts);
-priceType.addEventListener('change',renderProducts);
+q.addEventListener('input', renderProducts);
+filterCat.addEventListener('change', renderProducts);
+priceType.addEventListener('change', renderProducts);
+
+// پنجره شناور
+byId('showNewProduct').addEventListener('click', () => { modal.style.display = 'flex'; });
+byId('closeModal').addEventListener('click', () => { modal.style.display = 'none'; });
+
+// افزودن محصول جدید
+byId('addNewProduct').addEventListener('click', () => {
+  const name = byId('newName').value.trim();
+  const SKU = byId('newSKU').value.trim();
+  const category = byId('newCat').value.trim();
+  const partner = Number(byId('newPartner').value);
+  const customer = Number(byId('newCustomer').value);
+  if(!name || !SKU || !category || !partner || !customer){ alert('لطفاً همه فیلدها را پر کنید'); return; }
+  products.push({SKU, name, category, partner, customer});
+  rebuildCats(); renderProducts();
+  modal.style.display = 'none';
+  byId('newName').value = ''; byId('newSKU').value = ''; byId('newCat').value = ''; byId('newPartner').value = ''; byId('newCustomer').value = '';
+});
 })();
 </script>
 </body>
